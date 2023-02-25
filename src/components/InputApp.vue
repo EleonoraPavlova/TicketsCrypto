@@ -1,30 +1,57 @@
 <template>
-  <div class="d-flex justify-content-start">
-    <div class="d-flex flex-column">
-      <label for="input" class="fw-semibold">Ticket</label>
-      <input
-        type="text"
-        class="border border-success m-2 border-opacity-50 rounded-4 p-3 input"
-        placeholder="Example: DOGE"
-        id="input"
-      />
-    </div>
+  <div class="d-flex flex-column">
+    <slot />
+    <input
+      :type="type"
+      class="m-2 p-2"
+      :class="class"
+      :placeholder="placeholder"
+      :id="id"
+      :name="name"
+      :disabled="disabled"
+      :value="modelValue"
+      @input="updateInput"
+    />
   </div>
 </template>
 
 <script>
 export default {
   name: "InputApp",
-  props: {},
+  props: {
+    modelValue: {
+      type: String,
+      default: "",
+    },
+    type: {
+      type: String,
+      default: "text",
+    },
+    id: {
+      type: String,
+    },
+    placeholder: {
+      type: String,
+    },
+    class: {
+      type: String,
+    },
+    name: {
+      type: String,
+    },
+    disabled: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  emits: ["update:modelValue"],
+  methods: {
+    updateInput(event) {
+      this.$emit("update:modelValue", event.target.value);
+    },
+  },
 };
 </script>
 
 <style scoped lang="scss">
-.input {
-  // width: 15%;
-  &:hover {
-    border: 1px solid green !important;
-    opacity: 1;
-  }
-}
 </style>

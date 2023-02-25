@@ -9,20 +9,41 @@
         />
       </div>
       <div class="d-flex flex-column justify-content-start mb-4">
-        <InputApp class="mb-2" />
+        <div class="d-flex justify-content-start">
+          <div class="d-flex flex-column mb-2">
+            <InputApp
+              type="text"
+              id="input"
+              name="entry"
+              placeholder="Example: DOGE"
+              v-model.trim="ticker"
+              @keydown.enter="add"
+              class="home__input border border-success border-opacity-50 rounded mb-3"
+            >
+              <label for="input" class="fw-semibold m-1">Ticket</label>
+            </InputApp>
+          </div>
+        </div>
         <div class="d-flex justify-content-start align-items-center">
-          <ButtonsApp size="md" class="home__btn rounded-pill"
+          <ButtonsApp size="md" class="home__btn rounded-pill" @click="add"
             ><img
               class="home__btn-image"
               src="https://img.icons8.com/external-creatype-outline-colourcreatype/64/FFFEFE/external-add-marketplace-outline-creatype-outline-colourcreatype.png"
-            /><span class="fw-semibold p-2">Add</span>
+            /><span class="fw-semibold p-2"> Add </span>
           </ButtonsApp>
         </div>
       </div>
     </div>
     <div>
-      <hr />
-      <hr />
+      <hr class="m-4" />
+      <div class="d-flex justify-content-between align-items-center">
+        <TicketApp
+          v-for="t in tickers"
+          :key="t"
+          class="p-5 pb-3 m-4 home__ticket"
+        />
+      </div>
+      <hr class="m-3" />
     </div>
   </div>
 </template>
@@ -30,12 +51,26 @@
 <script>
 import InputApp from "../components/InputApp.vue";
 import ButtonsApp from "../components/ButtonsApp.vue";
-
+import TicketApp from "../components/TicketApp.vue";
 export default {
   name: "HomeView",
   components: {
     InputApp,
     ButtonsApp,
+    TicketApp,
+  },
+  data() {
+    return {
+      ticker: "",
+      tickers: ["1", "2", "3"],
+    };
+  },
+  methods: {
+    add() {
+      this.tickers.push(this.ticker);
+      console.log(this.tickers);
+      this.ticker = "";
+    },
   },
 };
 </script>
@@ -50,12 +85,25 @@ export default {
     width: 24px;
     height: 24px;
   }
+  &__input {
+    width: 186px !important;
+    &:hover {
+      border: 1px solid green;
+      opacity: 0.9 !important;
+    }
+  }
   &__btn {
     width: 186px;
     background-color: #7431f9;
     border-color: #7431f9;
     &:hover {
       box-shadow: 0 5px 5px -5px rgba(114, 46, 248, 0.9);
+    }
+  }
+  &__ticket {
+    &:hover {
+      border: 3px solid #7431f9;
+      border-radius: 10px;
     }
   }
 }
