@@ -34,17 +34,19 @@
         </div>
       </div>
     </div>
-    <div>
+    <template v-if="tickers.length">
       <hr class="m-4" />
-      <div class="d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center flex-wrap justify-content-center">
         <TicketApp
           v-for="t in tickers"
           :key="t"
+          :t="t"
           class="p-5 pb-3 m-4 home__ticket"
+          @handleDelete="handleDelete(t)"
         />
       </div>
       <hr class="m-3" />
-    </div>
+    </template>
   </div>
 </template>
 
@@ -59,17 +61,30 @@ export default {
     ButtonsApp,
     TicketApp,
   },
+
   data() {
     return {
       ticker: "",
-      tickers: ["1", "2", "3"],
+      tickers: [
+        { name: "DEMO1", price: "89" },
+        { name: "DEMO2", price: "-" },
+        { name: "DEMO3", price: "-" },
+        { name: "DEMO4", price: "-" },
+      ],
     };
   },
   methods: {
     add() {
-      this.tickers.push(this.ticker);
-      console.log(this.tickers);
+      const newTicker = {
+        name: this.ticker,
+        price: " - ",
+      };
+      this.tickers.push(newTicker);
       this.ticker = "";
+      console.log(this.tickers);
+    },
+    handleDelete(tickerToRemove) {
+      this.tickers = this.tickers.filter((t) => t !== tickerToRemove);
     },
   },
 };

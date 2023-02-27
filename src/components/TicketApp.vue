@@ -1,23 +1,20 @@
 <template>
-  <div
-    class="ticket d-flex flex-column justify-content-center"
-    :tickers="tickers"
-  >
+  <div class="ticket d-flex flex-column justify-content-center">
     <InputApp
-      class="border border-0 bg-transparent"
+      class="border border-0 bg-transparent text-center mb-3"
       type="text"
-      v-model="nameTicker"
+      v-model="t.name"
       :disabled="true"
     />
 
     <InputApp
-      class="border border-0 bg-transparent"
+      class="border border-0 bg-transparent text-center mb-3 dt lh-lg"
       type="number"
-      v-model="rate"
+      v-model="t.price"
       :disabled="true"
     />
 
-    <ButtonsApp color="white ticket__btn">
+    <ButtonsApp color="white ticket__btn" @click="$emit('handleDelete')">
       <img
         class="ticket__image"
         src="https://img.icons8.com/dotty/80/null/trash.png"
@@ -39,9 +36,8 @@ export default {
     InputApp,
   },
   props: {
-    tickers: {
-      type: Array,
-      default: () => [],
+    t: {
+      type: Object,
     },
   },
   data() {
@@ -50,6 +46,7 @@ export default {
       rate: "",
     };
   },
+  emits: ["handleDelete"],
 };
 </script>
 
@@ -69,4 +66,12 @@ export default {
     }
   }
 }
+
+// <div class="border border-0 bg-transparent text-dark" type="text">
+//   {{ t.name + " USD" }}
+// </div>
+
+// <div class="border border-0 bg-transparent text-dark" type="number">
+//   {{ t.price }}
+// </div>
 </style>
