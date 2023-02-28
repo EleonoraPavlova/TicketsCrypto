@@ -41,11 +41,19 @@
           v-for="t in tickers"
           :key="t"
           :t="t"
+          @click="currentStateTicker = t"
           class="p-5 pb-3 m-4 home__ticket"
           @handleDelete="handleDelete(t)"
         />
       </div>
+      {{ currentStateTicker }}
       <hr class="m-3" />
+      <div v-if="currentStateTicker">
+        <DropdownBox
+          @close="currentStateTicker = null"
+          :currentStateTicker="currentStateTicker"
+        />
+      </div>
     </template>
   </div>
 </template>
@@ -54,14 +62,16 @@
 import InputApp from "../components/InputApp.vue";
 import ButtonsApp from "../components/ButtonsApp.vue";
 import TicketApp from "../components/TicketApp.vue";
+import DropdownBox from "../components/DropdownBox.vue";
+
 export default {
   name: "HomeView",
   components: {
     InputApp,
     ButtonsApp,
     TicketApp,
+    DropdownBox,
   },
-
   data() {
     return {
       ticker: "",
@@ -71,6 +81,7 @@ export default {
         { name: "DEMO3", price: "-" },
         { name: "DEMO4", price: "-" },
       ],
+      currentStateTicker: null,
     };
   },
   methods: {
@@ -90,7 +101,7 @@ export default {
 };
 </script>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 .home {
   &__logo {
     width: 186px;

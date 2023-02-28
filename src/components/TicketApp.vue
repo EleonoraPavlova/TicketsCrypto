@@ -41,10 +41,7 @@ export default {
     },
   },
   data() {
-    return {
-      nameTicker: "",
-      rate: "",
-    };
+    return {};
   },
   emits: ["handleDelete"],
 };
