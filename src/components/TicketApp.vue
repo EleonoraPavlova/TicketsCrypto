@@ -1,18 +1,15 @@
 <template>
   <div class="ticket d-flex flex-column justify-content-center">
-    <InputApp
-      class="border border-0 bg-transparent text-center mb-3"
-      type="text"
-      v-model="t.name"
-      :disabled="true"
-    />
+    <div class="border border-0 bg-transparent text-center mb-3" type="text">
+      {{ t.name + " -  USD" }}
+    </div>
 
-    <InputApp
-      class="border border-0 bg-transparent text-center mb-3 dt lh-lg"
+    <div
+      class="border border-0 bg-transparent text-center mb-3 fs-2"
       type="number"
-      v-model="t.price"
-      :disabled="true"
-    />
+    >
+      {{ t.price }}
+    </div>
 
     <ButtonsApp color="white ticket__btn" @click="$emit('handleDelete')">
       <img
@@ -27,13 +24,11 @@
 
 <script>
 import ButtonsApp from "../components/ButtonsApp.vue";
-import InputApp from "../components/InputApp.vue";
 
 export default {
   name: "TicketApp",
   components: {
     ButtonsApp,
-    InputApp,
   },
   props: {
     t: {
@@ -43,7 +38,18 @@ export default {
   data() {
     return {};
   },
+
+  // onClick(event) {
+  //   event.stopPropagation();
+  //   console.log(event);
+  // },
   emits: ["handleDelete"],
+  // methods: {
+  //   onclick(event) {
+  //     debugger;
+  //     this.$emit("handleDelete", event);
+  //   },
+  // },
 };
 </script>
 

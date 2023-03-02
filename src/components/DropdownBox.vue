@@ -1,7 +1,7 @@
 <template>
   <div class="my-5 dropdown">
     <div class="d-flex justify-content-between align-items-center mb-2">
-      <h5 class="p-2">{{ currentStateTicker.name }}</h5>
+      <h5 class="p-2">{{ currentStateTicker.name + " -  USD" }}</h5>
       <ButtonsApp
         size="md"
         class="bg-transparent border border-0"
@@ -14,9 +14,8 @@
     </div>
     <div class="dropdown__box d-flex justify-content-start align-items-end">
       <ChartColumn
-        v-for="percent in percents"
-        :key="percent"
-        :percent="percent"
+        v-for="(percent, index) in calcPercents()"
+        :key="index"
         :style="{ height: `${percent}%` }"
       />
     </div>
@@ -37,13 +36,22 @@ export default {
     currentStateTicker: {
       type: Object,
     },
+    percents: {
+      type: Array,
+      default: () => [],
+    },
   },
-  data() {
-    return {
-      percents: Array(100)
-        .fill()
-        .map((e, i) => i + 1),
-    };
+  methods: {
+    calcPercents() {
+      if (this.percents.length < 2) {
+        return [];
+      }
+      const min = Math.min(...this.percents); //макс значение процентов в графике
+      const max = Math.max(...this.percents); //мин значение процентов в графике
+      const result = this.percents.map((value) => 5 + (value / max) * 95);
+
+      return result;
+    },
   },
   emits: ["close"],
 };
@@ -51,6 +59,14 @@ export default {
 
 <style lang="scss" scoped>
 .dropdown {
+  // Array(100)
+  //       .fill()
+  //       .map((e, i) => i + 1)
+  //  const result = this.percents.map(
+  //       (item) => (5 * (item - min) * 95) / (max - min)
+  //     );
+  //     debugger;
+  //     return result;
   &__box {
     border-bottom: 1px solid #dee2e6;
     border-left: 1px solid #dee2e6;

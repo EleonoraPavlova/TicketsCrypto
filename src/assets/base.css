@@ -55,8 +55,9 @@ li {
   color: green;
 }
 
-.dangerous {
-  color: red;
+.error {
+  border: 1px solid red !important;
+  border-radius: 5px !important;
 }
 
 .yellow {

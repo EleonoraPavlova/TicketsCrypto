@@ -20,8 +20,8 @@ export default {
   name: "InputApp",
   props: {
     modelValue: {
-      type: String,
-      default: "",
+      type: [String, Number],
+      default: null,
     },
     type: {
       type: String,

@@ -15,10 +15,13 @@
               type="text"
               id="input"
               name="entry"
-              placeholder="Example: DOGE"
+              :placeholder="placeholder"
               v-model.trim="ticker"
               @keydown.enter="add"
               class="home__input border border-success border-opacity-50 rounded mb-3"
+              :class="{
+                error: hasError,
+              }"
             >
               <label for="input" class="fw-semibold m-1">Ticket</label>
             </InputApp>
@@ -41,17 +44,20 @@
           v-for="t in tickers"
           :key="t"
           :t="t"
-          @click="currentStateTicker = t"
+          :class="{
+            active: currentStateTicker === t,
+          }"
           class="p-5 pb-3 m-4 home__ticket"
           @handleDelete="handleDelete(t)"
+          @click.self="select(t)"
         />
       </div>
-      {{ currentStateTicker }}
       <hr class="m-3" />
       <div v-if="currentStateTicker">
         <DropdownBox
           @close="currentStateTicker = null"
           :currentStateTicker="currentStateTicker"
+          :percents="percents"
         />
       </div>
     </template>
@@ -74,29 +80,61 @@ export default {
   },
   data() {
     return {
+      placeholder: "Example: DOGE",
       ticker: "",
-      tickers: [
-        { name: "DEMO1", price: "89" },
-        { name: "DEMO2", price: "-" },
-        { name: "DEMO3", price: "-" },
-        { name: "DEMO4", price: "-" },
-      ],
+      tickers: [],
       currentStateTicker: null,
+      hasError: false,
+      percents: [], //график состояния, который меняется
     };
   },
   methods: {
     add() {
-      const newTicker = {
-        name: this.ticker,
+      if (this.ticker === null || this.ticker.length <= 2) {
+        this.ticker = "";
+        this.placeholder = "Enter valid value";
+        this.hasError = true;
+        return;
+      } else {
+        this.hasError = false;
+      }
+      const currentTicker = {
+        name: this.ticker.toUpperCase(),
         price: " - ",
       };
-      this.tickers.push(newTicker);
+      this.tickers.push(currentTicker);
+      setInterval(async () => {
+        const f = await fetch(
+          `https://min-api.cryptocompare.com/data/price?fsym=${currentTicker.name}&tsyms=USD&api_key=27e0b4ea632ec5912ec5902491a1c30f21df3e642da1c82bae4d773a7969ce8a`
+        );
+        const data = await f.json();
+
+        //нашли в массиве тикеров конкретный билет и присвоили, т.е обновили данные
+        this.tickers.find((el) => el.name === currentTicker.name).price =
+          data.USD > 1 ? data.USD.toFixed(2) : data.USD.toPrecision(2);
+        currentTicker.price = data.USD;
+
+        //пушим в массив графиков
+        if (this.currentStateTicker?.name === currentTicker.name) {
+          this.percents.push(data.USD);
+          console.log(this.percents);
+        }
+      }, 9000);
       this.ticker = "";
       console.log(this.tickers);
     },
     handleDelete(tickerToRemove) {
       this.tickers = this.tickers.filter((t) => t !== tickerToRemove);
     },
+    select(t) {
+      this.currentStateTicker = t;
+      this.percents = [];
+    },
+
+    // onClick(event) {
+    //   event.stopPropagation();
+    //   console.log(event);
+    // },
   },
 };
 </script>
@@ -132,5 +170,9 @@ export default {
       border-radius: 10px;
     }
   }
+}
+.active {
+  border: 3px solid #7431f9;
+  border-radius: 10px;
 }
 </style>

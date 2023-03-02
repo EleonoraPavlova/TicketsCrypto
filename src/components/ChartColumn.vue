@@ -19,8 +19,7 @@ export default {
 <style lang="scss" scoped>
 .chart {
   &__strip {
-    height: 5px;
-    width: 20px;
+    width: 5px;
     background-color: #7431f9;
   }
 }

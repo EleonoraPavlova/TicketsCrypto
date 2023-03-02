@@ -2,7 +2,7 @@
   <button
     class="btn m-1"
     :class="[`btn-${color}`, `btn-${size}`]"
-    @click="$emit('click')"
+    @click="($e) => $emit('click', $e)"
   >
     <slot />
   </button>
