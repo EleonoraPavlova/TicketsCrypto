@@ -56,6 +56,7 @@ export default {
 
 <style lang="scss" scoped>
 .ticket {
+  cursor: pointer;
   width: 250px;
   border: 3px solid transparent;
   &__image {

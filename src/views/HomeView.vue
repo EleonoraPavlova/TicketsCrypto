@@ -61,6 +61,9 @@
         />
       </div>
     </template>
+    <div v-else>
+      <h6 class="fw-semibold home__h6">You have not added any tickers yet</h6>
+    </div>
   </div>
 </template>
 
@@ -100,24 +103,23 @@ export default {
       }
       const currentTicker = {
         name: this.ticker.toUpperCase(),
-        price: " - ",
+        price: 0,
       };
       this.tickers.push(currentTicker);
       setInterval(async () => {
-        const f = await fetch(
-          `https://min-api.cryptocompare.com/data/price?fsym=${currentTicker.name}&tsyms=USD&api_key=27e0b4ea632ec5912ec5902491a1c30f21df3e642da1c82bae4d773a7969ce8a`
-        );
+        const f = await fetch();
+        //  `https://min-api.cryptocompare.com/data/price?fsym=${currentTicker.name}&tsyms=USD&api_key=27e0b4ea632ec5912ec5902491a1c30f21df3e642da1c82bae4d773a7969ce8a`
         const data = await f.json();
 
         //нашли в массиве тикеров конкретный билет и присвоили, т.е обновили данные
-        this.tickers.find((el) => el.name === currentTicker.name).price =
+        let find = this.tickers.find((el) => el.name === currentTicker.name);
+        find.price =
           data.USD > 1 ? data.USD.toFixed(2) : data.USD.toPrecision(2);
         currentTicker.price = data.USD;
 
         //пушим в массив графиков
         if (this.currentStateTicker?.name === currentTicker.name) {
           this.percents.push(data.USD);
-          console.log(this.percents);
         }
       }, 9000);
       this.ticker = "";
@@ -169,6 +171,11 @@ export default {
       border: 3px solid #7431f9;
       border-radius: 10px;
     }
+  }
+  &__h6 {
+    color: #7431f9;
+    text-shadow: 2px 7px 5px rgba(0, 0, 0, 0.3),
+      0px -4px 10px rgba(255, 255, 255, 0.3);
   }
 }
 .active {

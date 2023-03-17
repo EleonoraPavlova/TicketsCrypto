@@ -43,13 +43,11 @@ export default {
   },
   methods: {
     calcPercents() {
-      if (this.percents.length < 2) {
-        return [];
-      }
-      const min = Math.min(...this.percents); //макс значение процентов в графике
+      // if (this.percents.length < 2) {
+      //   return [];
+      // }
       const max = Math.max(...this.percents); //мин значение процентов в графике
       const result = this.percents.map((value) => 5 + (value / max) * 95);
-
       return result;
     },
   },
@@ -59,14 +57,6 @@ export default {
 
 <style lang="scss" scoped>
 .dropdown {
-  // Array(100)
-  //       .fill()
-  //       .map((e, i) => i + 1)
-  //  const result = this.percents.map(
-  //       (item) => (5 * (item - min) * 95) / (max - min)
-  //     );
-  //     debugger;
-  //     return result;
   &__box {
     border-bottom: 1px solid #dee2e6;
     border-left: 1px solid #dee2e6;
