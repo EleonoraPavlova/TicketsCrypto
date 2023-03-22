@@ -8,7 +8,7 @@
           src="https://www.cryptocompare.com/media/35651259/logowbg.png"
         />
       </div>
-      <div class="d-flex flex-column justify-content-start mb-4">
+      <div class="d-flex flex-column justify-content-start">
         <div class="d-flex justify-content-start">
           <div class="d-flex flex-column mb-2">
             <InputApp
@@ -58,7 +58,18 @@
       </div>
     </div>
     <template v-if="tickers.length">
-      <hr class="m-4" />
+      <div class="d-flex align-items-center justify-content-end">
+        <p class="m-2">Filter:</p>
+        <div>
+          <ButtonsApp size="xs" class="home__filter-btn fontsizeSmall ml-2"
+            >Next</ButtonsApp
+          >
+          <ButtonsApp size="xs" class="home__filter-btn fontsizeSmall"
+            >Prev</ButtonsApp
+          >
+        </div>
+      </div>
+      <hr class="m-3" />
       <div class="d-flex align-items-center flex-wrap justify-content-center">
         <TicketApp
           v-for="t in tickers"
@@ -118,10 +129,16 @@ export default {
       isAddedTicker: false,
       isShow: false,
       fetchInterval: null,
+      currentTicker: {},
     };
   },
   created() {
     this.getCoinList();
+    const tickersData = localStorage.getItem("cryptomicon-list");
+    if (tickersData != null) {
+      this.tickers = JSON.parse(tickersData); //cтрока в объект json
+      this.subscribeToUpdates(this.tickers);
+    }
   },
   methods: {
     add() {
@@ -140,37 +157,45 @@ export default {
         this.hasError = false;
       }
 
-      const currentTicker = {
+      this.currentTicker = {
         name: this.ticker.toUpperCase(),
         price: 0,
       };
-      this.tickers.push(currentTicker);
+      this.tickers.push(this.currentTicker);
 
+      // в localStorage нужно только строковый формат записывать, поэтому JSON.stringify
+      localStorage.setItem("cryptomicon-list", JSON.stringify(this.tickers)); //создали запись localStorage и потом ее нужно загрузить!обязательно
+      this.subscribeToUpdates(this.currentTicker.name);
+
+      this.ticker = "";
+    },
+    subscribeToUpdates(tickerName) {
+      //обновления ticker после перезагрузки localStorage
       this.fetchInterval = setInterval(async () => {
         const f = await fetch(
-          `https://min-api.cryptocompare.com/data/price?fsym=${currentTicker.name}&tsyms=USD&api_key=27e0b4ea632ec5912ec5902491a1c30f21df3e642da1c82bae4d773a7969ce8a`
+          `https://min-api.cryptocompare.com/data/price?fsym=${tickerName}&tsyms=USD&api_key=27e0b4ea632ec5912ec5902491a1c30f21df3e642da1c82bae4d773a7969ce8a`
         );
         const data = await f.json();
 
         //нашли в массиве тикеров конкретный билет и присвоили, т.е обновили данные
-        let find = this.tickers.find((el) => el.name === currentTicker.name);
-        find.price =
+        let find = this.tickers.find((el) => el.name === tickerName);
+        this.currentTicker.price = find.price =
           data.USD > 1 ? data.USD.toFixed(2) : data.USD.toPrecision(2);
-        currentTicker.price = find.price;
 
         //пушим в массив графиков
-        if (this.currentStateTicker?.name === currentTicker.name) {
+        if (this.currentStateTicker?.name === tickerName) {
           this.percents.push(data.USD);
         }
       }, 9000);
-      this.ticker = "";
     },
     handleDelete(tickerToRemove) {
       this.tickers = this.tickers.filter((t) => t !== tickerToRemove);
       this.currentStateTicker = null;
       this.isShow = true;
       clearInterval(this.fetchInterval);
-      debugger;
+      localStorage.removeItem("cryptomicon-list");
+      localStorage.setItem("cryptomicon-list", JSON.stringify(this.tickers));
+      console.log(this.tickers);
     },
     select(t) {
       this.currentStateTicker = t;
@@ -253,6 +278,13 @@ export default {
     opacity: 0.8;
     &:hover {
       opacity: 1;
+    }
+  }
+  &__filter-btn {
+    border: 1px solid #7431f9;
+    &:hover {
+      background-color: #7431f9;
+      color: white;
     }
   }
 }

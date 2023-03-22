@@ -43,9 +43,6 @@ export default {
   },
   methods: {
     calcPercents() {
-      // if (this.percents.length < 2) {
-      //   return [];
-      // }
       const max = Math.max(...this.percents); //мин значение процентов в графике
       const result = this.percents.map((value) => 5 + (value / max) * 95);
       return result;
