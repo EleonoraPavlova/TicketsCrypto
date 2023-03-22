@@ -14,7 +14,7 @@ export default {
   props: {
     color: {
       type: String,
-      default: "primary",
+      default: "main-color-purple",
     },
     size: {
       type: String,
@@ -28,4 +28,8 @@ export default {
   emits: ["click"],
 };
 </script>
-<style lang="scss"></style>
+<style lang="scss">
+.main-color-purple {
+  color: #7431f9;
+}
+</style>

@@ -38,18 +38,13 @@ export default {
   data() {
     return {};
   },
-
-  // onClick(event) {
-  //   event.stopPropagation();
-  //   console.log(event);
-  // },
   emits: ["handleDelete"],
   // methods: {
-  //   onclick(event) {
-  //     debugger;
-  //     this.$emit("handleDelete", event);
+  //   // onclick(event) {
+  //   //   debugger;
+  //   //   this.$emit("handleDelete", event);
   //   },
-  // },
+  //},
 };
 </script>
 
