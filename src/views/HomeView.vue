@@ -59,20 +59,39 @@
     </div>
     <template v-if="tickers.length">
       <div class="d-flex align-items-center justify-content-end">
-        <p class="m-2">Filter:</p>
+        <div class="d-flex align-items-center">
+          <p class="m-2">Filter:</p>
+          <InputApp
+            v-model.trim="filter"
+            class="home__filter-input rounded"
+          ></InputApp>
+        </div>
         <div>
-          <ButtonsApp size="xs" class="home__filter-btn fontsizeSmall ml-2"
-            >Next</ButtonsApp
+          <ButtonsApp
+            size="xs"
+            class="home__filter-btn fontsizeSmall"
+            @click="page = page - 1"
+            :disabled="page === 1"
           >
-          <ButtonsApp size="xs" class="home__filter-btn fontsizeSmall"
-            >Prev</ButtonsApp
+            Prev
+          </ButtonsApp>
+          <ButtonsApp
+            size="xs"
+            class="home__filter-btn fontsizeSmall ml-2"
+            @click="page = page + 1"
+            :disabled="
+              page * limit > filteredTickers.length ||
+              filteredTickers.length === limit
+            "
           >
+            Next
+          </ButtonsApp>
         </div>
       </div>
       <hr class="m-3" />
       <div class="d-flex align-items-center flex-wrap justify-content-center">
         <TicketApp
-          v-for="t in tickers"
+          v-for="t in splicedTickers"
           :key="t"
           :t="t"
           :class="{
@@ -130,6 +149,10 @@ export default {
       isShow: false,
       fetchInterval: null,
       currentTicker: {},
+      page: 1, //текущая страница
+      limit: 8,
+      filter: "",
+      // hasNextPage: true,
     };
   },
   created() {
@@ -137,7 +160,9 @@ export default {
     const tickersData = localStorage.getItem("cryptomicon-list");
     if (tickersData != null) {
       this.tickers = JSON.parse(tickersData); //cтрока в объект json
-      this.subscribeToUpdates(this.tickers);
+      this.tickers.forEach((item) => {
+        this.subscribeToUpdates(item.name);
+      });
     }
   },
   methods: {
@@ -159,9 +184,11 @@ export default {
 
       this.currentTicker = {
         name: this.ticker.toUpperCase(),
-        price: 0,
+        price: "-",
       };
       this.tickers.push(this.currentTicker);
+
+      this.filter = "";
 
       // в localStorage нужно только строковый формат записывать, поэтому JSON.stringify
       localStorage.setItem("cryptomicon-list", JSON.stringify(this.tickers)); //создали запись localStorage и потом ее нужно загрузить!обязательно
@@ -226,11 +253,29 @@ export default {
       }
     },
   },
-
   watch: {
     "ticker.length"() {
       this.isAddedTicker = false;
       this.filteredCoins();
+    },
+    filter() {
+      //отслеживаю состочние input-filter, чтобы сбрасывать на первую страницу
+      this.page = 1;
+    },
+  },
+  computed: {
+    filteredTickers() {
+      if (!this.tickers) {
+        return [];
+      }
+      return this.tickers.filter((item) =>
+        item.name.startsWith(this.filter.toUpperCase())
+      );
+    },
+    splicedTickers() {
+      const start = (this.page - 1) * this.limit;
+      const end = this.limit * this.page;
+      return [...this.filteredTickers].splice(start, end);
     },
   },
 };
@@ -286,6 +331,9 @@ export default {
       background-color: #7431f9;
       color: white;
     }
+  }
+  &__filter-input {
+    border: 1px solid #7431f9 !important;
   }
 }
 .active {
