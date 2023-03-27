@@ -14,7 +14,7 @@
     </div>
     <div class="dropdown__box d-flex justify-content-start align-items-end">
       <ChartColumn
-        v-for="(percent, index) in calcPercents()"
+        v-for="(percent, index) in calcPercents"
         :key="index"
         :style="{ height: `${percent}%` }"
       />
@@ -41,11 +41,14 @@ export default {
       default: () => [],
     },
   },
-  methods: {
+  computed: {
     calcPercents() {
+      const min = Math.min(...this.percents);
       const max = Math.max(...this.percents); //мин значение процентов в графике
-      const result = this.percents.map((value) => 5 + (value / max) * 95);
-      return result;
+      if (max === min) {
+        return this.percents.map(() => 50);
+      }
+      return this.percents.map((value) => 5 + (value / max) * 95);
     },
   },
   emits: ["close"],

@@ -70,7 +70,7 @@
           <ButtonsApp
             size="xs"
             class="home__filter-btn fontsizeSmall"
-            @click="page = page - 1"
+            @click="prevPage"
             :disabled="page === 1"
           >
             Prev
@@ -78,7 +78,7 @@
           <ButtonsApp
             size="xs"
             class="home__filter-btn fontsizeSmall ml-2"
-            @click="page = page + 1"
+            @click="nextPage"
             :disabled="
               page * limit > filteredTickers.length ||
               filteredTickers.length === limit
@@ -102,6 +102,9 @@
           @click.self="select(t)"
         />
       </div>
+      <NoticeApp class="fw-semibold home__h6" v-if="!filteredTickers.length"
+        >Tickers on this filter were not found</NoticeApp
+      >
       <hr class="m-3" />
       <div v-if="currentStateTicker">
         <DropdownBox
@@ -149,10 +152,9 @@ export default {
       isShow: false,
       fetchInterval: null,
       currentTicker: {},
-      page: 1, //текущая страница
+      page: this.$route.query.page || 1, //текущая страница
       limit: 8,
-      filter: "",
-      // hasNextPage: true,
+      filter: this.$route.query.filter || "",
     };
   },
   created() {
@@ -173,10 +175,11 @@ export default {
         this.isAddedTicker = true;
         return;
       }
-      if (this.ticker === null || this.ticker.length <= 2) {
+      if (this.ticker === null || this.ticker.length < 1) {
         this.ticker = "";
         this.placeholder = "Enter valid value";
         this.hasError = true;
+        debugger;
         return;
       } else {
         this.hasError = false;
@@ -186,12 +189,11 @@ export default {
         name: this.ticker.toUpperCase(),
         price: "-",
       };
-      this.tickers.push(this.currentTicker);
+      //добавляю тикер в массив тикеров(и обновляю его[...])
+      this.tickers = [...this.tickers, this.currentTicker];
 
       this.filter = "";
 
-      // в localStorage нужно только строковый формат записывать, поэтому JSON.stringify
-      localStorage.setItem("cryptomicon-list", JSON.stringify(this.tickers)); //создали запись localStorage и потом ее нужно загрузить!обязательно
       this.subscribeToUpdates(this.currentTicker.name);
 
       this.ticker = "";
@@ -222,16 +224,16 @@ export default {
       clearInterval(this.fetchInterval);
       localStorage.removeItem("cryptomicon-list");
       localStorage.setItem("cryptomicon-list", JSON.stringify(this.tickers));
-      console.log(this.tickers);
     },
     select(t) {
       this.currentStateTicker = t;
-      this.percents = [];
     },
     filteredCoins() {
+      //удовлетворяют условию поиска тикеров
       let filteredCoins = this.coins.filter((element) => {
         return element.startsWith(this.ticker.toUpperCase());
       });
+      //режут постранично
       this.fourCoins = filteredCoins.splice(0, 4);
       return this.fourCoins;
     },
@@ -247,10 +249,17 @@ export default {
         const data = await response.json();
         this.coin = data.symbol;
         this.coins = Object.values(data.Data).map((item) => item.symbol);
-        console.log(this.coins);
       } catch (e) {
         console.log("there was an error");
       }
+    },
+    prevPage() {
+      this.page = this.page - 1;
+      this.$router.push({ query: { filter: this.filter, page: this.page } });
+    },
+    nextPage() {
+      this.page = this.page + 1;
+      this.$router.push({ query: { filter: this.filter, page: this.page } });
     },
   },
   watch: {
@@ -258,12 +267,33 @@ export default {
       this.isAddedTicker = false;
       this.filteredCoins();
     },
+
+    currentStateTicker() {
+      this.percents = [];
+    },
+
+    tickers() {
+      // в localStorage нужно только строковый формат записывать, поэтому JSON.stringify
+      localStorage.setItem("cryptomicon-list", JSON.stringify(this.tickers)); //создали запись localStorage и потом ее нужно загрузить!обязательно
+    },
+
     filter() {
-      //отслеживаю состочние input-filter, чтобы сбрасывать на первую страницу
+      //отслеживаю состочние input-filter, чтобы сбрасывать на первую страницу тем самым обновляя значения фильтров массива
       this.page = 1;
+      this.currentStateTicker = null;
+    },
+
+    splicedTickers() {
+      if (this.splicedTickers.length === 0 && this.page > 1) {
+        //возвращаемся на предыд страницу на шаг назад, если массив splicedTickers пуст
+        this.page -= 1;
+      }
     },
   },
+
   computed: {
+    //computed никогда не нужно вызывать и нельзя давать аргумент!!!
+    //отслеживает изменение-вычисление массива filteredTickers
     filteredTickers() {
       if (!this.tickers) {
         return [];
@@ -276,6 +306,7 @@ export default {
       const start = (this.page - 1) * this.limit;
       const end = this.limit * this.page;
       return [...this.filteredTickers].splice(start, end);
+      //[...] деструктуризацией мы создаем новый массив
     },
   },
 };
