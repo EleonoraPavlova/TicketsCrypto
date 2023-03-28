@@ -126,6 +126,8 @@ import ButtonsApp from "../components/ButtonsApp.vue";
 import TicketApp from "../components/TicketApp.vue";
 import DropdownBox from "../components/DropdownBox.vue";
 import NoticeApp from "../components/NoticeApp.vue";
+import { loadTicker } from "../api";
+import { getCoinsList } from "../api";
 
 export default {
   name: "HomeView",
@@ -199,23 +201,26 @@ export default {
       this.ticker = "";
     },
     subscribeToUpdates(tickerName) {
-      //обновления ticker после перезагрузки localStorage
-      this.fetchInterval = setInterval(async () => {
-        const f = await fetch(
-          `https://min-api.cryptocompare.com/data/price?fsym=${tickerName}&tsyms=USD&api_key=27e0b4ea632ec5912ec5902491a1c30f21df3e642da1c82bae4d773a7969ce8a`
-        );
-        const data = await f.json();
+      try {
+        //обновления ticker после перезагрузки localStorage
+        this.fetchInterval = setInterval(async () => {
+          const dataTicker = await loadTicker(tickerName);
 
-        //нашли в массиве тикеров конкретный билет и присвоили, т.е обновили данные
-        let find = this.tickers.find((el) => el.name === tickerName);
-        this.currentTicker.price = find.price =
-          data.USD > 1 ? data.USD.toFixed(2) : data.USD.toPrecision(2);
+          //нашли в массиве тикеров конкретный билет и присвоили, т.е обновили данные
+          let find = this.tickers.find((el) => el.name === tickerName);
+          this.currentTicker.price = find.price =
+            dataTicker.USD > 1
+              ? dataTicker.USD.toFixed(2)
+              : dataTicker.USD.toPrecision(2);
 
-        //пушим в массив графиков
-        if (this.currentStateTicker?.name === tickerName) {
-          this.percents.push(data.USD);
-        }
-      }, 9000);
+          //пушим в массив графиков
+          if (this.currentStateTicker?.name === tickerName) {
+            this.percents.push(dataTicker.USD);
+          }
+        }, 9000);
+      } catch {
+        console.log("wrong");
+      }
     },
     handleDelete(tickerToRemove) {
       this.tickers = this.tickers.filter((t) => t !== tickerToRemove);
@@ -243,12 +248,9 @@ export default {
     },
     async getCoinList() {
       try {
-        const response = await fetch(
-          "https://min-api.cryptocompare.com/data/blockchain/list?&api_key=27e0b4ea632ec5912ec5902491a1c30f21df3e642da1c82bae4d773a7969ce8a"
-        );
-        const data = await response.json();
-        this.coin = data.symbol;
-        this.coins = Object.values(data.Data).map((item) => item.symbol);
+        const dataCoin = await getCoinsList();
+        this.coin = dataCoin.symbol;
+        this.coins = Object.values(dataCoin.Data).map((item) => item.symbol);
       } catch (e) {
         console.log("there was an error");
       }
