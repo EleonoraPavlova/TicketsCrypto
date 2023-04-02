@@ -44,7 +44,7 @@ export default {
   //   //   debugger;
   //   //   this.$emit("handleDelete", event);
   //   },
-  //},
+  // },
 };
 </script>
 

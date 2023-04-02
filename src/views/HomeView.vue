@@ -126,8 +126,8 @@ import ButtonsApp from "../components/ButtonsApp.vue";
 import TicketApp from "../components/TicketApp.vue";
 import DropdownBox from "../components/DropdownBox.vue";
 import NoticeApp from "../components/NoticeApp.vue";
-import { loadTicker } from "../api";
-import { getCoinsList } from "../api";
+import { loadTickers, getCoinsList } from "../api";
+import { formatPrice } from "../formatPrice";
 
 export default {
   name: "HomeView",
@@ -161,12 +161,16 @@ export default {
   },
   created() {
     this.getCoinList();
-    const tickersData = localStorage.getItem("cryptomicon-list");
+    let tickersData = localStorage.getItem("cryptomicon-list");
+    tickersData = JSON.parse(tickersData);
     if (tickersData != null) {
-      this.tickers = JSON.parse(tickersData); //cтрока в объект json
-      this.tickers.forEach((item) => {
-        this.subscribeToUpdates(item.name);
+      this.tickers = tickersData.map((ticker) => {
+        return {
+          name: ticker,
+          price: "-",
+        };
       });
+      setInterval(() => this.updateTickers(), 9000);
     }
   },
   methods: {
@@ -181,7 +185,6 @@ export default {
         this.ticker = "";
         this.placeholder = "Enter valid value";
         this.hasError = true;
-        debugger;
         return;
       } else {
         this.hasError = false;
@@ -196,28 +199,34 @@ export default {
 
       this.filter = "";
 
-      this.subscribeToUpdates(this.currentTicker.name);
+      this.updateTickers(this.currentTicker.name);
 
       this.ticker = "";
     },
-    subscribeToUpdates(tickerName) {
+    async updateTickers() {
       try {
+        if (!this.tickers.length) {
+          return;
+        }
         //обновления ticker после перезагрузки localStorage
-        this.fetchInterval = setInterval(async () => {
-          const dataTicker = await loadTicker(tickerName);
-
-          //нашли в массиве тикеров конкретный билет и присвоили, т.е обновили данные
-          let find = this.tickers.find((el) => el.name === tickerName);
-          this.currentTicker.price = find.price =
-            dataTicker.USD > 1
-              ? dataTicker.USD.toFixed(2)
-              : dataTicker.USD.toPrecision(2);
+        //беру поле name у каждого тикера
+        const dataTicker = await loadTickers(this.tickers.map((el) => el.name));
+        this.tickers.forEach((ticker) => {
+          const price = dataTicker[ticker.name.toUpperCase()];
+          ticker.price = formatPrice(price);
 
           //пушим в массив графиков
-          if (this.currentStateTicker?.name === tickerName) {
-            this.percents.push(dataTicker.USD);
+          if (this.currentStateTicker?.name === ticker.name) {
+            this.percents.push(ticker.price);
           }
-        }, 9000);
+        });
+
+        // //нашли в массиве тикеров конкретный билет и присвоили, т.е обновили данные
+        // let find = this.tickers.find((el) => el.name === tickerName);
+        // this.currentTicker.price = find.price =
+        //   dataTicker.USD > 1
+        //     ? dataTicker.USD.toFixed(2)
+        //     : dataTicker.USD.toPrecision(2);
       } catch {
         console.log("wrong");
       }
@@ -226,9 +235,11 @@ export default {
       this.tickers = this.tickers.filter((t) => t !== tickerToRemove);
       this.currentStateTicker = null;
       this.isShow = true;
-      clearInterval(this.fetchInterval);
       localStorage.removeItem("cryptomicon-list");
-      localStorage.setItem("cryptomicon-list", JSON.stringify(this.tickers));
+      localStorage.setItem(
+        "cryptomicon-list",
+        JSON.stringify(this.tickers.map((el) => el.name))
+      );
     },
     select(t) {
       this.currentStateTicker = t;
@@ -251,6 +262,7 @@ export default {
         const dataCoin = await getCoinsList();
         this.coin = dataCoin.symbol;
         this.coins = Object.values(dataCoin.Data).map((item) => item.symbol);
+        console.log(this.coins);
       } catch (e) {
         console.log("there was an error");
       }
@@ -276,12 +288,16 @@ export default {
 
     tickers() {
       // в localStorage нужно только строковый формат записывать, поэтому JSON.stringify
-      localStorage.setItem("cryptomicon-list", JSON.stringify(this.tickers)); //создали запись localStorage и потом ее нужно загрузить!обязательно
+      localStorage.setItem(
+        "cryptomicon-list",
+        JSON.stringify(this.tickers.map((el) => el.name))
+      ); //создали запись localStorage и потом ее нужно загрузить!обязательно
     },
 
     filter() {
       //отслеживаю состочние input-filter, чтобы сбрасывать на первую страницу тем самым обновляя значения фильтров массива
       this.page = 1;
+      this.$router.push({ query: { filter: this.filter } });
       this.currentStateTicker = null;
     },
 
@@ -299,10 +315,11 @@ export default {
     filteredTickers() {
       if (!this.tickers) {
         return [];
+      } else {
+        return this.tickers.filter((item) =>
+          item.name.startsWith(this.filter.toUpperCase())
+        );
       }
-      return this.tickers.filter((item) =>
-        item.name.startsWith(this.filter.toUpperCase())
-      );
     },
     splicedTickers() {
       const start = (this.page - 1) * this.limit;

@@ -48,6 +48,7 @@ export default {
       if (max === min) {
         return this.percents.map(() => 50);
       }
+
       return this.percents.map((value) => 5 + (value / max) * 95);
     },
   },

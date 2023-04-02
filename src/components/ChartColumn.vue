@@ -1,5 +1,5 @@
 <template>
-  <div class="chart__strip ms-2" :style="style"></div>
+  <div class="chart__strip ms-2 rounded" :style="style"></div>
 </template>
 
 <script>
