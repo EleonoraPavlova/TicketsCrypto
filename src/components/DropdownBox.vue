@@ -1,7 +1,7 @@
 <template>
   <div class="my-5 dropdown">
     <div class="d-flex justify-content-between align-items-center mb-2">
-      <h5 class="p-2">{{ currentStateTicker.name + " -  USD" }}</h5>
+      <h5 class="p-2">{{ tickers[currentTickerIndex].name + " -  USD" }}</h5>
       <ButtonsApp
         size="md"
         class="bg-transparent border border-0"
@@ -33,8 +33,12 @@ export default {
     ChartColumn,
   },
   props: {
-    currentStateTicker: {
-      type: Object,
+    currentTickerIndex: {
+      type: null,
+    },
+    tickers: {
+      type: Array,
+      default: () => [],
     },
     percents: {
       type: Array,

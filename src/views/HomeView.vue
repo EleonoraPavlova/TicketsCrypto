@@ -8,6 +8,7 @@
           src="https://www.cryptocompare.com/media/35651259/logowbg.png"
         />
       </div>
+
       <div class="d-flex flex-column justify-content-start">
         <div class="d-flex justify-content-start">
           <div class="d-flex flex-column mb-2">
@@ -91,26 +92,30 @@
       <hr class="m-3" />
       <div class="d-flex align-items-center flex-wrap justify-content-center">
         <TicketApp
-          v-for="t in splicedTickers"
-          :key="t"
+          v-for="(t, index) in splicedTickers"
+          :key="index"
           :t="t"
           :class="{
-            active: currentStateTicker === t,
+            active: currentTickerIndex === index,
           }"
           class="p-5 pb-3 m-4 home__ticket"
           @handleDelete="handleDelete(t)"
-          @click.self="select(t)"
+          @click.self="select(index)"
         />
       </div>
+      <NoticeApp class="fw-semibold text-danger" v-if="noUpdates"
+        >No updates for this ticket</NoticeApp
+      >
       <NoticeApp class="fw-semibold home__h6" v-if="!filteredTickers.length"
         >Tickers on this filter were not found</NoticeApp
       >
       <hr class="m-3" />
-      <div v-if="currentStateTicker">
+      <div v-if="tickers[currentTickerIndex]">
         <DropdownBox
-          @close="currentStateTicker = null"
-          :currentStateTicker="currentStateTicker"
-          :percents="percents"
+          @close="currentTickerIndex = null"
+          :currentTickerIndex="currentTickerIndex"
+          :tickers="tickers"
+          :percents="tickers[currentTickerIndex].percents"
         />
       </div>
     </template>
@@ -126,7 +131,8 @@ import ButtonsApp from "../components/ButtonsApp.vue";
 import TicketApp from "../components/TicketApp.vue";
 import DropdownBox from "../components/DropdownBox.vue";
 import NoticeApp from "../components/NoticeApp.vue";
-import { loadTickers, getCoinsList } from "../api";
+import { getCoinsList } from "../api";
+import { subscribeToTicker, unsubscribeFromTicker } from "../apiWs.js";
 import { formatPrice } from "../formatPrice";
 
 export default {
@@ -147,13 +153,13 @@ export default {
       coins: [],
       fourCoin: "",
       fourCoins: [], //массив из 4 label(подсказки)
-      currentStateTicker: null,
       hasError: false,
       percents: [], //график состояния, который меняется
       isAddedTicker: false,
       isShow: false,
+      noUpdates: false,
       fetchInterval: null,
-      currentTicker: {},
+      currentTickerIndex: null,
       page: this.$route.query.page || 1, //текущая страница
       limit: 8,
       filter: this.$route.query.filter || "",
@@ -168,9 +174,15 @@ export default {
         return {
           name: ticker,
           price: "-",
+          percents: [],
         };
       });
-      setInterval(() => this.updateTickers(), 9000);
+      this.tickers.forEach((ticker) => {
+        subscribeToTicker(ticker.name, (price) => {
+          ticker.price = formatPrice(price);
+          ticker.percents.push(price);
+        });
+      });
     }
   },
   methods: {
@@ -189,60 +201,43 @@ export default {
       } else {
         this.hasError = false;
       }
-
-      this.currentTicker = {
+      //добавляю тикер в массив тикеров
+      this.tickers.push({
         name: this.ticker.toUpperCase(),
         price: "-",
-      };
-      //добавляю тикер в массив тикеров(и обновляю его[...])
-      this.tickers = [...this.tickers, this.currentTicker];
+        percents: [],
+      });
 
       this.filter = "";
-
-      this.updateTickers(this.currentTicker.name);
-
       this.ticker = "";
-    },
-    async updateTickers() {
-      try {
-        if (!this.tickers.length) {
-          return;
-        }
-        //обновления ticker после перезагрузки localStorage
-        //беру поле name у каждого тикера
-        const dataTicker = await loadTickers(this.tickers.map((el) => el.name));
-        this.tickers.forEach((ticker) => {
-          const price = dataTicker[ticker.name.toUpperCase()];
-          ticker.price = formatPrice(price);
 
-          //пушим в массив графиков
-          if (this.currentStateTicker?.name === ticker.name) {
-            this.percents.push(ticker.price);
+      this.tickers.forEach((ticker) => {
+        subscribeToTicker(ticker.name, (price) => {
+          ticker.price = formatPrice(price);
+          ticker.percents.push(price);
+
+          if (price === "-") {
+            this.noUpdates = true;
           }
         });
+      });
 
-        // //нашли в массиве тикеров конкретный билет и присвоили, т.е обновили данные
-        // let find = this.tickers.find((el) => el.name === tickerName);
-        // this.currentTicker.price = find.price =
-        //   dataTicker.USD > 1
-        //     ? dataTicker.USD.toFixed(2)
-        //     : dataTicker.USD.toPrecision(2);
-      } catch {
-        console.log("wrong");
-      }
+      this.currentTickerIndex = null;
     },
+
     handleDelete(tickerToRemove) {
       this.tickers = this.tickers.filter((t) => t !== tickerToRemove);
-      this.currentStateTicker = null;
+      this.tickers[this.currentTickerIndex] = null;
       this.isShow = true;
       localStorage.removeItem("cryptomicon-list");
       localStorage.setItem(
         "cryptomicon-list",
         JSON.stringify(this.tickers.map((el) => el.name))
       );
+      unsubscribeFromTicker(tickerToRemove.name);
     },
-    select(t) {
-      this.currentStateTicker = t;
+    select(index) {
+      this.currentTickerIndex = index;
     },
     filteredCoins() {
       //удовлетворяют условию поиска тикеров
@@ -262,7 +257,6 @@ export default {
         const dataCoin = await getCoinsList();
         this.coin = dataCoin.symbol;
         this.coins = Object.values(dataCoin.Data).map((item) => item.symbol);
-        console.log(this.coins);
       } catch (e) {
         console.log("there was an error");
       }
@@ -281,16 +275,18 @@ export default {
       this.isAddedTicker = false;
       this.filteredCoins();
     },
-
-    currentStateTicker() {
+    currentTickerIndex() {
       this.percents = [];
     },
-
-    tickers() {
+    "tickers.length"() {
       // в localStorage нужно только строковый формат записывать, поэтому JSON.stringify
       localStorage.setItem(
         "cryptomicon-list",
-        JSON.stringify(this.tickers.map((el) => el.name))
+        JSON.stringify(
+          this.tickers.map((el) => {
+            return el.name;
+          })
+        )
       ); //создали запись localStorage и потом ее нужно загрузить!обязательно
     },
 
@@ -298,7 +294,7 @@ export default {
       //отслеживаю состочние input-filter, чтобы сбрасывать на первую страницу тем самым обновляя значения фильтров массива
       this.page = 1;
       this.$router.push({ query: { filter: this.filter } });
-      this.currentStateTicker = null;
+      this.currentTickerIndex = null;
     },
 
     splicedTickers() {
@@ -328,6 +324,43 @@ export default {
       //[...] деструктуризацией мы создаем новый массив
     },
   },
+  // async updateTickers() {
+  //   try {
+  //     if (!this.tickers.length) {
+  //       return;
+  //     }
+  //     //обновления ticker после перезагрузки localStorage
+  //     //беру поле name у каждого тикера
+  //     subscribeToTicker(
+  //       this.tickers[this.currentTickerIndex].name,
+  //       (price) => {
+  //         this.tickers[this.currentTickerIndex].price = price;
+  //         this.tickers[this.currentTickerIndex].percents.push(
+  //           formatPrice(price)
+  //         );
+  //       }
+  //     );
+  //     // const dataTicker = await loadTickers(this.tickers.map((el) => el.name));
+  //     // this.tickers.forEach((ticker) => {
+  //     //   const price = dataTicker[ticker.name.toUpperCase()];
+  //     //   ticker.price = formatPrice(price);
+
+  //     //   //пушим в массив графиков
+  //     //   if (this.tickers[this.currentTickerIndex]?.name === ticker.name) {
+  //     //     this.percents.push(ticker.price);
+  //     //   }
+  //     //
+  //     // });
+  //     // //нашли в массиве тикеров конкретный билет и присвоили, т.е обновили данные
+  //     // let find = this.tickers.find((el) => el.name === tickerName);
+  //     // this.currentTickerIndex.price = find.price =
+  //     //   dataTicker.USD > 1
+  //     //     ? dataTicker.USD.toFixed(2)
+  //     //     : dataTicker.USD.toPrecision(2);
+  //   } catch {
+  //     console.log("wrong");
+  //   }
+  // }
 };
 </script>
 
@@ -360,6 +393,10 @@ export default {
       border: 3px solid #7431f9;
       border-radius: 10px;
     }
+    &.active {
+      border: 3px solid #7431f9;
+      border-radius: 10px;
+    }
   }
   &__h6 {
     color: #7431f9;
@@ -386,10 +423,7 @@ export default {
     border: 1px solid #7431f9 !important;
   }
 }
-.active {
-  border: 3px solid #7431f9;
-  border-radius: 10px;
-}
+
 .font-size-small {
   font-size: smaller;
 }

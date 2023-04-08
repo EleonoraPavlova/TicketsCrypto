@@ -22,17 +22,17 @@ export const getCoinsList = () =>
 //  `https://min-api.cryptocompare.com/data/all/coinlist&api_key=${API_KEY}`
 
 
-const tickers = new Map()
+// const tickers = new Map()
 
 
-export const subscribeToTicker = (ticker, cb) => {
-  const subscribers = tickers.get(ticker) || []
-  tickers.set(ticker, [...subscribers, cb])
-};
+// export const subscribeToTicker = (ticker, cb) => {
+//   const subscribers = tickers.get(ticker) || []
+//   tickers.set(ticker, [...subscribers, cb])
+// };
 
 
-export const unsubscribeFromTicker = (ticker, cb) => {
-  const subscribers = tickers.get(ticker) || []
-  tickers.set(ticker, subscribers.filter((fn) => fn != cb))
-}
-//(ticker, cb) - когда ticker обновится, вызови вот эту cb колбэк функц
+// export const unsubscribeFromTicker = (ticker, cb) => {
+//   const subscribers = tickers.get(ticker) || []
+//   tickers.set(ticker, subscribers.filter((fn) => fn != cb))
+// }
+// //(ticker, cb) - когда ticker обновится, вызови вот эту cb колбэк функц
