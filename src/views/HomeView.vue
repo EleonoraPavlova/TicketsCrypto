@@ -182,21 +182,21 @@ export default {
         subscribeToTicker(ticker.name, (price) => {
           ticker.price = formatPrice(price);
           ticker.percents.push(price);
+
           console.log(ticker);
         });
       });
       this.tickers.forEach((ticker) => {
         setTimeout(() => {
           this.priceNotFound(ticker);
-        }, 2000);
+        }, 6000);
       });
     }
   },
   methods: {
     add() {
-      if (
-        this.tickers.find((item) => item.name === this.ticker.toUpperCase())
-      ) {
+      this.ticker = this.ticker.toUpperCase();
+      if (this.tickers.find((item) => item.name === this.ticker)) {
         this.isAddedTicker = true;
         return;
       }
@@ -215,7 +215,7 @@ export default {
 
       //добавляю тикер в массив тикеров
       this.tickers.push({
-        name: this.ticker.toUpperCase(),
+        name: this.ticker,
         price: "-",
         percents: [],
         noUpdates: false,
@@ -225,20 +225,21 @@ export default {
       this.ticker = "";
 
       subscribeToTicker(this.tickers[this.tickers.length - 1].name, (price) => {
-        let filteredTicker = this.tickers.filter((t) => {
-          return t.name === this.tickers[this.tickers.length - 1].name;
-        });
-        filteredTicker.forEach((t) => {
-          if (t === this.tickers[this.tickers.length - 1]) {
+        // let filteredTicker = this.tickers.filter((t) => {
+        //   debugger;
+        //   return t.name === this.tickers[this.tickers.length - 1].name;
+        // });
+        [this.tickers[this.tickers.length - 1]].forEach((t) => {
+          if (t.name === this.tickers[this.tickers.length - 1].name) {
+            t.price = formatPrice(price);
             return this.tickers[this.tickers.length - 1].percents.push(price);
           }
-          t.price = formatPrice(price);
         });
       });
 
       setTimeout(
         () => this.priceNotFound(this.tickers[this.tickers.length - 1]),
-        2000
+        6000
       );
 
       this.currentTickerIndex = null;
