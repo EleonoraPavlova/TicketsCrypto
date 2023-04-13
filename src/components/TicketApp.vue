@@ -19,16 +19,23 @@
       />
       <span class="p-1">Delete</span>
     </ButtonsApp>
+    <div>
+      <NoticeApp class="text-danger m-0 ticket__updates" v-if="t.noUpdates"
+        >No updates</NoticeApp
+      >
+    </div>
   </div>
 </template>
 
 <script>
 import ButtonsApp from "../components/ButtonsApp.vue";
+import NoticeApp from "../components/NoticeApp.vue";
 
 export default {
   name: "TicketApp",
   components: {
     ButtonsApp,
+    NoticeApp,
   },
   props: {
     t: {
@@ -39,12 +46,6 @@ export default {
     return {};
   },
   emits: ["handleDelete"],
-  // methods: {
-  //   // onclick(event) {
-  //   //   debugger;
-  //   //   this.$emit("handleDelete", event);
-  //   },
-  // },
 };
 </script>
 
@@ -64,13 +65,8 @@ export default {
       box-shadow: 0 5px 5px -5px rgba(114, 46, 248, 0.9);
     }
   }
+  &__updates {
+    line-height: 1;
+  }
 }
-
-// <div class="border border-0 bg-transparent text-dark" type="text">
-//   {{ t.name + " USD" }}
-// </div>
-
-// <div class="border border-0 bg-transparent text-dark" type="number">
-//   {{ t.price }}
-// </div>
 </style>

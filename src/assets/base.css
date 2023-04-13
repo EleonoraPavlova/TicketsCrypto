@@ -68,6 +68,10 @@ li {
   background-color: grey;
 }
 
+.color-base {
+  color: #7431f9
+}
+
 .info {
   color: #0dcaf0;
 }

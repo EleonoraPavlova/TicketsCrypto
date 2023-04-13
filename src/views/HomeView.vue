@@ -18,7 +18,7 @@
               name="entry"
               :placeholder="placeholder"
               v-model.trim="ticker"
-              @keydown.enter="add"
+              @keydown.enter="add(index)"
               class="home__input border border-success border-opacity-50 rounded"
               :class="{
                 error: hasError,
@@ -26,6 +26,9 @@
             >
               <label for="input" class="fw-semibold m-1">Ticket</label>
             </InputApp>
+            <NoticeApp v-if="isNoNameInCoins" class="color-base"
+              >Name of such ticker not found</NoticeApp
+            >
             <div
               v-if="ticker.length != 0"
               class="mb-3 d-flex justify-content-start align-items-center m-1"
@@ -103,9 +106,6 @@
           @click.self="select(index)"
         />
       </div>
-      <NoticeApp class="fw-semibold text-danger" v-if="noUpdates"
-        >No updates for this ticket</NoticeApp
-      >
       <NoticeApp class="fw-semibold home__h6" v-if="!filteredTickers.length"
         >Tickers on this filter were not found</NoticeApp
       >
@@ -156,8 +156,8 @@ export default {
       hasError: false,
       percents: [], //график состояния, который меняется
       isAddedTicker: false,
+      isNoNameInCoins: false,
       isShow: false,
-      noUpdates: false,
       fetchInterval: null,
       currentTickerIndex: null,
       page: this.$route.query.page || 1, //текущая страница
@@ -175,13 +175,20 @@ export default {
           name: ticker,
           price: "-",
           percents: [],
+          noUpdates: false,
         };
       });
       this.tickers.forEach((ticker) => {
         subscribeToTicker(ticker.name, (price) => {
           ticker.price = formatPrice(price);
           ticker.percents.push(price);
+          console.log(ticker);
         });
+      });
+      this.tickers.forEach((ticker) => {
+        setTimeout(() => {
+          this.priceNotFound(ticker);
+        }, 2000);
       });
     }
   },
@@ -201,30 +208,41 @@ export default {
       } else {
         this.hasError = false;
       }
+      if (!this.coins.includes(this.ticker)) {
+        this.isNoNameInCoins = true;
+        return;
+      }
+
       //добавляю тикер в массив тикеров
       this.tickers.push({
         name: this.ticker.toUpperCase(),
         price: "-",
         percents: [],
+        noUpdates: false,
       });
 
       this.filter = "";
       this.ticker = "";
 
-      this.tickers.forEach((ticker) => {
-        subscribeToTicker(ticker.name, (price) => {
-          ticker.price = formatPrice(price);
-          ticker.percents.push(price);
-
-          if (price === "-") {
-            this.noUpdates = true;
+      subscribeToTicker(this.tickers[this.tickers.length - 1].name, (price) => {
+        let filteredTicker = this.tickers.filter((t) => {
+          return t.name === this.tickers[this.tickers.length - 1].name;
+        });
+        filteredTicker.forEach((t) => {
+          if (t === this.tickers[this.tickers.length - 1]) {
+            return this.tickers[this.tickers.length - 1].percents.push(price);
           }
+          t.price = formatPrice(price);
         });
       });
 
+      setTimeout(
+        () => this.priceNotFound(this.tickers[this.tickers.length - 1]),
+        2000
+      );
+
       this.currentTickerIndex = null;
     },
-
     handleDelete(tickerToRemove) {
       this.tickers = this.tickers.filter((t) => t !== tickerToRemove);
       this.tickers[this.currentTickerIndex] = null;
@@ -248,8 +266,8 @@ export default {
       this.fourCoins = filteredCoins.splice(0, 4);
       return this.fourCoins;
     },
-    addLabel(fourCoin) {
-      this.ticker = fourCoin;
+    addLabel(name) {
+      this.ticker = name;
       this.add();
     },
     async getCoinList() {
@@ -269,10 +287,18 @@ export default {
       this.page = this.page + 1;
       this.$router.push({ query: { filter: this.filter, page: this.page } });
     },
+    priceNotFound(ticker) {
+      if (ticker.price === "-") {
+        ticker.noUpdates = true;
+      } else {
+        return ticker.price;
+      }
+    },
   },
   watch: {
     "ticker.length"() {
       this.isAddedTicker = false;
+      this.isNoNameInCoins = false;
       this.filteredCoins();
     },
     currentTickerIndex() {
