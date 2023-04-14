@@ -9,10 +9,15 @@ const socket = new WebSocket(
 const AGGREGATE_INDEX = "5";
 
 socket.addEventListener("message", e => {
-  const { TYPE: type, FROMSYMBOL: currency, PRICE: newPrice } = JSON.parse(
+  const { TYPE: type, FROMSYMBOL: currency, PRICE: newPrice, PARAMETER: param } = JSON.parse(
     e.data
   );
   if (type !== AGGREGATE_INDEX || newPrice === undefined) {
+    if (Number(type) > 400) {
+      let paramCurrency = param.split('~')[2]
+      const handlers = tickersHandlers.get(paramCurrency) ?? [];
+      handlers.forEach(fn => fn('NO_UPDATES'));
+    }
     return;
   }
 
@@ -61,4 +66,3 @@ export const unsubscribeFromTicker = ticker => {
   tickersHandlers.delete(ticker);
   unsubscribeFromTickerOnWs(ticker);
 };
-

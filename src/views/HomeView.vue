@@ -180,16 +180,15 @@ export default {
       });
       this.tickers.forEach((ticker) => {
         subscribeToTicker(ticker.name, (price) => {
+          if (price === "NO_UPDATES") {
+            ticker.price = null;
+            ticker.noUpdates = true;
+            return;
+          }
           ticker.price = formatPrice(price);
           ticker.percents.push(price);
-
           console.log(ticker);
         });
-      });
-      this.tickers.forEach((ticker) => {
-        setTimeout(() => {
-          this.priceNotFound(ticker);
-        }, 6000);
       });
     }
   },
@@ -224,23 +223,18 @@ export default {
       this.filter = "";
       this.ticker = "";
 
-      subscribeToTicker(this.tickers[this.tickers.length - 1].name, (price) => {
-        // let filteredTicker = this.tickers.filter((t) => {
-        //   debugger;
-        //   return t.name === this.tickers[this.tickers.length - 1].name;
-        // });
-        [this.tickers[this.tickers.length - 1]].forEach((t) => {
-          if (t.name === this.tickers[this.tickers.length - 1].name) {
-            t.price = formatPrice(price);
-            return this.tickers[this.tickers.length - 1].percents.push(price);
-          }
-        });
-      });
+      const currentTicker = this.tickers[this.tickers.length - 1];
 
-      setTimeout(
-        () => this.priceNotFound(this.tickers[this.tickers.length - 1]),
-        6000
-      );
+      subscribeToTicker(currentTicker.name, (price) => {
+        if (price === "NO_UPDATES") {
+          currentTicker.price = null;
+          currentTicker.noUpdates = true;
+          return;
+        }
+        currentTicker.price = formatPrice(price);
+
+        return currentTicker.percents.push(currentTicker.price);
+      });
 
       this.currentTickerIndex = null;
     },
@@ -288,6 +282,7 @@ export default {
       this.page = this.page + 1;
       this.$router.push({ query: { filter: this.filter, page: this.page } });
     },
+    //поддержка price через ws
     priceNotFound(ticker) {
       if (ticker.price === "-") {
         ticker.noUpdates = true;

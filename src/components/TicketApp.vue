@@ -8,7 +8,7 @@
       class="border border-0 bg-transparent text-center mb-3 fs-2"
       type="number"
     >
-      {{ t.price }}
+      {{ t.price || "-" }}
     </div>
 
     <ButtonsApp color="white ticket__btn" @click="$emit('handleDelete')">
